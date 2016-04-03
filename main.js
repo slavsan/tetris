@@ -4,7 +4,8 @@
   var tetris = new Tetris({
     rows: 25,
     cols: 13,
-    placeholder: '#tetris'
+    gamePlaceholder: '#tetris',
+    previewPlaceholder: '#preview'
   });
   tetris.init();
 

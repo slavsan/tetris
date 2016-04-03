@@ -24,9 +24,9 @@
   };
 
   BaseShape.prototype.freeCells = function() {
+    var self = this;
     this.cells.forEach(function( cell ) {
-      cell.$el.css('background', 'white');
-      cell.isCurrentShape = false;
+      self.freeCell(cell);
     });
     this.cells = [];
     return this;
@@ -39,7 +39,7 @@
   BaseShape.prototype.moveRight = function() {
     this.makeMove({x: 1, y: 0});
   };
-  
+
   BaseShape.prototype.moveDown = function() {
     this.makeMove({x: 0, y: -1});
   };
@@ -90,6 +90,12 @@
     this.cells.forEach(function( cell ) {
       self.coords.push({x: cell.x, y: cell.y});
     });
+  };
+
+  BaseShape.prototype.freeCell = function( cell ) {
+    cell.$el.css('background', 'white');
+    cell.isCurrentShape = false;
+    return this;
   };
 
   BaseShape.prototype.onInit = function(grid ) {

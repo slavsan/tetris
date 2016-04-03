@@ -14,3 +14,8 @@
     margin: 1px;
     vertical-align: top;
 }
+.right-column {
+    vertical-align: top;
+    display: inline-block;
+    margin-left: 10px;
+}
