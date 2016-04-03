@@ -21,6 +21,84 @@
     return this;
   };
 
+  BaseShape.prototype.freeCells = function() {
+    this.cells.forEach(function( cell ) {
+      cell.$el.css('background', 'white');
+      cell.isCurrentShape = false;
+    });
+    this.cells = [];
+    return this;
+  };
+
+  BaseShape.prototype.moveLeft = function() {
+    var self = this;
+    var isMoveAllowed = this.cells.every(function( cell ) {
+      var cellAtNewCoords = self.grid.getCellAt(cell.x - 1, cell.y);
+      if (!cellAtNewCoords || cellAtNewCoords.isSolid) {
+        console.log("obstacle, can't continue moving left");
+        return false;
+      }
+      return true;
+    });
+    if (!isMoveAllowed) {
+      console.log("stopped");
+      return false;
+    }
+    console.log("move left");
+    this.coords = [];
+    this.cells.forEach(function( cell ) {
+      self.coords.push({x: cell.x - 1, y: cell.y});
+    });
+    this.freeCells();
+    this.occupyCells();
+  };
+
+  BaseShape.prototype.moveRight = function() {
+    var self = this;
+    var isMoveAllowed = this.cells.every(function( cell ) {
+      var cellAtNewCoords = self.grid.getCellAt(cell.x + 1, cell.y);
+      if (!cellAtNewCoords || cellAtNewCoords.isSolid) {
+        console.log("obstacle, can't continue moving right");
+        return false;
+      }
+      return true;
+    });
+    if (!isMoveAllowed) {
+      console.log("stopped");
+      return false;
+    }
+    console.log("move right");
+    this.coords = [];
+    this.cells.forEach(function( cell ) {
+      self.coords.push({x: cell.x + 1, y: cell.y});
+    });
+    this.freeCells();
+    this.occupyCells();
+  };
+  
+  BaseShape.prototype.moveDown = function() {
+    var self = this;
+    var isMoveAllowed = this.cells.every(function( cell ) {
+      var newCell = self.grid.getCellAt(cell.x, cell.y - 1);
+      if (!newCell || newCell.isSolid) {
+        console.log('landed');
+        return false;
+      }
+      return true;
+    });
+    if (!isMoveAllowed) {
+      console.log("stopped");
+      return false;
+    }
+    console.log("move down");
+    this.coords = [];
+    this.cells.forEach(function( cell ) {
+      self.coords.push({x: cell.x, y: cell.y - 1});
+    });
+    this.freeCells();
+    this.occupyCells();
+  };
+
   function OShape( grid ) {
     this.grid = grid;
     var firstRow = grid.rowsCount - 1;

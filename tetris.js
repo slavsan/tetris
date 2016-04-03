@@ -20,8 +20,41 @@
       });
       return this;
     },
+    bind: function() {
+      var self = this;
+      $(document).on('keydown', function( e ) {
+        if (!self.shape) {
+          console.warn("No current shape available");
+          return;
+        }
+        switch (e.keyCode) {
+          case 32: // Space
+            self.shape.moveDown();
+            break;
+          case 37: // Left arrow
+            self.shape.moveLeft();
+            break;
+          case 38: // Up arrow
+            self.shape.rotate();
+            break;
+          case 39: // Right arrow
+            self.shape.moveRight();
+            break;
+          case 40: // Down arrow
+            self.shape.moveDown();
+            break;
+          case 80: // 'P'
+            // pause the game eventually
+            self.pause();
+            break;
+          default:
+          // ..
+        }
+      });
+    },
     init: function() {
-      var shape = new this.shapes[0](this.grid);
+      this.bind();
+      this.shape = new this.shapes[0](this.grid);
     }
   };
 
