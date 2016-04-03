@@ -20,7 +20,7 @@
       });
       return this;
     },
-    bind: function() {
+    handleKeyboardInput: function() {
       var self = this;
       $(document).on('keydown', function( e ) {
         if (!self.shape) {
@@ -53,7 +53,7 @@
       });
     },
     init: function() {
-      this.bind();
+      this.handleKeyboardInput();
       this.shape = new this.shapes[0](this.grid);
     }
   };

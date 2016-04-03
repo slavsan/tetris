@@ -7,12 +7,14 @@
     this.cells = [];
   }
   BaseShape.prototype.constructor = BaseShape;
+
   BaseShape.prototype.occupyCell = function( cell ) {
     cell.$el.css('background', 'red');
     cell.isCurrentShape = true;
     this.cells.push(cell);
     return this;
   };
+
   BaseShape.prototype.occupyCells = function() {
     var self = this;
     this.coords.forEach(function( coord ) {
@@ -31,137 +33,107 @@
   };
 
   BaseShape.prototype.moveLeft = function() {
-    var self = this;
-    var isMoveAllowed = this.cells.every(function( cell ) {
-      var cellAtNewCoords = self.grid.getCellAt(cell.x - 1, cell.y);
-      if (!cellAtNewCoords || cellAtNewCoords.isSolid) {
-        console.log("obstacle, can't continue moving left");
-        return false;
-      }
-      return true;
-    });
-    if (!isMoveAllowed) {
-      console.log("stopped");
-      return false;
-    }
-    console.log("move left");
-    this.coords = [];
-    this.cells.forEach(function( cell ) {
-      self.coords.push({x: cell.x - 1, y: cell.y});
-    });
-    this.freeCells();
-    this.occupyCells();
+    this.makeMove({x: -1, y: 0});
   };
 
   BaseShape.prototype.moveRight = function() {
-    var self = this;
-    var isMoveAllowed = this.cells.every(function( cell ) {
-      var cellAtNewCoords = self.grid.getCellAt(cell.x + 1, cell.y);
-      if (!cellAtNewCoords || cellAtNewCoords.isSolid) {
-        console.log("obstacle, can't continue moving right");
-        return false;
-      }
-      return true;
-    });
-    if (!isMoveAllowed) {
-      console.log("stopped");
-      return false;
-    }
-    console.log("move right");
-    this.coords = [];
-    this.cells.forEach(function( cell ) {
-      self.coords.push({x: cell.x + 1, y: cell.y});
-    });
-    this.freeCells();
-    this.occupyCells();
+    this.makeMove({x: 1, y: 0});
   };
   
   BaseShape.prototype.moveDown = function() {
-    var self = this;
-    var isMoveAllowed = this.cells.every(function( cell ) {
-      var newCell = self.grid.getCellAt(cell.x, cell.y - 1);
-      if (!newCell || newCell.isSolid) {
-        console.log('landed');
-        return false;
-      }
-      return true;
-    });
-    if (!isMoveAllowed) {
-      console.log("stopped");
-      return false;
-    }
-    console.log("move down");
-    this.coords = [];
-    this.cells.forEach(function( cell ) {
-      self.coords.push({x: cell.x, y: cell.y - 1});
-    });
-    this.freeCells();
-    this.occupyCells();
+    this.makeMove({x: 0, y: -1});
   };
 
   BaseShape.prototype.rotate = function() {
-    var self = this;
-
     var data = this.getRotationData();
     var coords = data[0];
     var newRotationState = data[1];
 
-    // check the coordinates
-    var isAllowedToRotate = coords.every(function( coord ) {
-      var neighbourCell = self.grid.getCellAt(coord.x, coord.y);
-      if (!neighbourCell || neighbourCell.isSolid) {
-        console.log('could not rotate');
-        return false;
-      }
-      return true;
+    var self = this;
+    var canRotate = coords.every(function( coord ) {
+      var newCell = self.grid.getCellAt(coord.x, coord.y);
+      return !(!newCell || newCell.isSolid);
     });
+    if (canRotate) {
+      this.clearCoords();
+      this.freeCells();
+      coords.forEach(function( coord ) {
+        self.occupyCell(self.grid.getCellAt(coord.x, coord.y));
+      });
 
-    if (!isAllowedToRotate) {
-      console.log("rotation failed");
-      return false;
+      this.rotationState = newRotationState;
     }
+  };
 
-    this.rotationState = newRotationState;
-    this.coords = coords;
-    this.freeCells();
+  BaseShape.prototype.makeMove = function( move ) {
+    var self = this;
+    var canMakeMove = this.cells.every(function( cell ) {
+      var newCell = self.grid.getCellAt(cell.x + move.x, cell.y + move.y);
+      return !(!newCell || newCell.isSolid);
+    });
+    if (canMakeMove) {
+      this.clearCoords();
+      this.saveCoords();
+      this.freeCells();
+      this.coords.forEach(function( coord ) {
+        self.occupyCell(self.grid.getCellAt(coord.x + move.x, coord.y + move.y));
+      });
+    }
+  };
+
+  BaseShape.prototype.clearCoords = function() {
+    this.coords = [];
+  };
+
+  BaseShape.prototype.saveCoords = function() {
+    var self = this;
+    this.cells.forEach(function( cell ) {
+      self.coords.push({x: cell.x, y: cell.y});
+    });
+  };
+
+  BaseShape.prototype.onInit = function(grid ) {
+    this.rotationState = 1;
+    this.grid = grid;
+    this.events = [];
+    this.coords = [];
+    this.cells = [];
+    this.setInitialCoordinates();
     this.occupyCells();
   };
 
   function OShape( grid ) {
-    this.grid = grid;
-    var firstRow = grid.rowsCount - 1;
-    var secondRow = grid.rowsCount - 2;
-    var middleColumn = parseInt(grid.colsCount / 2, 10);
-    this.coords = [];
-    this.coords.push(grid.getCellAt(middleColumn, firstRow));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn + 1, firstRow));
-    this.coords.push(grid.getCellAt(middleColumn + 1, secondRow));
-    this.occupyCells();
-    return this;
+    this.onInit(grid);
   }
   OShape.prototype = new BaseShape();
   OShape.prototype.constructor = OShape;
+  OShape.prototype.setInitialCoordinates = function() {
+    var firstRow = this.grid.rowsCount - 1;
+    var secondRow = this.grid.rowsCount - 2;
+    var middleColumn = parseInt(this.grid.colsCount / 2, 10);
+    this.coords.push({x: middleColumn, y: firstRow});
+    this.coords.push({x: middleColumn, y: secondRow});
+    this.coords.push({x: middleColumn + 1, y: firstRow});
+    this.coords.push({x: middleColumn + 1, y: secondRow});
+  };
   OShape.prototype.rotate = function() {
-    console.log("Disable the rotatioin for the 'O' shape");
+    console.log("Disable the rotation for the 'O' shape");
   };
 
   function TShape( grid ) {
-    this.grid = grid;
-    var firstRow = grid.rowsCount - 1;
-    var secondRow = grid.rowsCount - 2;
-    var middleColumn = parseInt(grid.colsCount / 2, 10);
-    this.coords = [];
-    this.coords.push(grid.getCellAt(middleColumn, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn, firstRow));
-    this.coords.push(grid.getCellAt(middleColumn - 1, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn + 1, secondRow));
-    this.occupyCells();
-    this.rotationState = 1;
-    return this;
+    this.onInit(grid);
   }
   TShape.prototype = new BaseShape();
   TShape.prototype.constructor = TShape;
+  TShape.prototype.setInitialCoordinates = function() {
+    var firstRow = this.grid.rowsCount - 1;
+    var secondRow = this.grid.rowsCount - 2;
+    var middleColumn = parseInt(this.grid.colsCount / 2, 10);
+    this.coords.push({x: middleColumn, y: secondRow});
+    this.coords.push({x: middleColumn, y: firstRow});
+    this.coords.push({x: middleColumn - 1, y: secondRow});
+    this.coords.push({x: middleColumn + 1, y: secondRow});
+  };
   TShape.prototype.getRotationData = function() {
     var center;
     var coords = [];
@@ -204,20 +176,18 @@
   };
 
   function SShape( grid ) {
-    this.grid = grid;
-    var secondRow = grid.rowsCount - 2;
-    var middleColumn = parseInt(grid.colsCount / 2, 10);
-    this.coords = [];
-    this.coords.push(grid.getCellAt(middleColumn, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn - 1, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn - 1, secondRow + 1));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow - 1));
-    this.occupyCells();
-    this.rotationState = 1;
-    return this;
+    this.onInit(grid);
   }
   SShape.prototype  = new BaseShape();
   SShape.prototype.constructor = SShape;
+  SShape.prototype.setInitialCoordinates = function() {
+    var secondRow = this.grid.rowsCount - 2;
+    var middleColumn = parseInt(this.grid.colsCount / 2, 10);
+    this.coords.push({x: middleColumn, y: secondRow});
+    this.coords.push({x: middleColumn - 1, y: secondRow});
+    this.coords.push({x: middleColumn - 1, y: secondRow + 1});
+    this.coords.push({x: middleColumn, y: secondRow - 1});
+  };
   SShape.prototype.getRotationData = function() {
     var center;
     var coords = [];
@@ -244,20 +214,18 @@
   };
 
   function ZShape( grid ) {
-    this.grid = grid;
-    var secondRow = grid.rowsCount - 2;
-    var middleColumn = parseInt(grid.colsCount / 2, 10);
-    this.coords = [];
-    this.coords.push(grid.getCellAt(middleColumn, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn - 1, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn - 1, secondRow - 1));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow + 1));
-    this.occupyCells();
-    this.rotationState = 1;
-    return this;
+    this.onInit(grid);
   }
   ZShape.prototype  = new BaseShape();
   ZShape.prototype.constructor = ZShape;
+  ZShape.prototype.setInitialCoordinates = function() {
+    var secondRow = this.grid.rowsCount - 2;
+    var middleColumn = parseInt(this.grid.colsCount / 2, 10);
+    this.coords.push({x: middleColumn, y: secondRow});
+    this.coords.push({x: middleColumn - 1, y: secondRow});
+    this.coords.push({x: middleColumn - 1, y: secondRow - 1});
+    this.coords.push({x: middleColumn, y: secondRow + 1});
+  };
   ZShape.prototype.getRotationData = function() {
     var center;
     var coords = [];
@@ -284,20 +252,18 @@
   };
 
   function LShape( grid ) {
-    this.grid = grid;
-    var secondRow = grid.rowsCount - 2;
-    var middleColumn = parseInt(grid.colsCount / 2, 10);
-    this.coords = [];
-    this.coords.push(grid.getCellAt(middleColumn, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow + 1));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow - 1));
-    this.coords.push(grid.getCellAt(middleColumn + 1, secondRow - 1));
-    this.occupyCells();
-    this.rotationState = 1;
-    return this;
+    this.onInit(grid);
   }
   LShape.prototype = new BaseShape();
   LShape.prototype.constructor = LShape;
+  LShape.prototype.setInitialCoordinates = function() {
+    var secondRow = this.grid.rowsCount - 2;
+    var middleColumn = parseInt(this.grid.colsCount / 2, 10);
+    this.coords.push({x: middleColumn, y: secondRow});
+    this.coords.push({x: middleColumn, y: secondRow + 1});
+    this.coords.push({x: middleColumn, y: secondRow - 1});
+    this.coords.push({x: middleColumn + 1, y: secondRow - 1});
+  };
   LShape.prototype.getRotationData = function() {
     var center;
     var coords = [];
@@ -340,20 +306,18 @@
   };
 
   function JShape( grid ) {
-    this.grid = grid;
-    var secondRow = grid.rowsCount - 2;
-    var middleColumn = parseInt(grid.colsCount / 2, 10);
-    this.coords = [];
-    this.coords.push(grid.getCellAt(middleColumn, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow + 1));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow - 1));
-    this.coords.push(grid.getCellAt(middleColumn -1, secondRow - 1));
-    this.occupyCells();
-    this.rotationState = 1;
-    return this;
+    this.onInit(grid);
   }
   JShape.prototype = new BaseShape();
   JShape.prototype.constructor = JShape;
+  JShape.prototype.setInitialCoordinates = function() {
+    var secondRow = this.grid.rowsCount - 2;
+    var middleColumn = parseInt(this.grid.colsCount / 2, 10);
+    this.coords.push({x: middleColumn, y: secondRow});
+    this.coords.push({x: middleColumn, y: secondRow + 1});
+    this.coords.push({x: middleColumn, y: secondRow - 1});
+    this.coords.push({x: middleColumn -1, y: secondRow - 1});
+  };
   JShape.prototype.getRotationData = function() {
     var center;
     var coords = [];
@@ -396,20 +360,18 @@
   };
 
   function IShape( grid ) {
-    this.grid = grid;
-    var secondRow = grid.rowsCount - 2;
-    var middleColumn = parseInt(grid.colsCount / 2, 10);
-    this.coords = [];
-    this.coords.push(grid.getCellAt(middleColumn, secondRow));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow + 1));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow - 1));
-    this.coords.push(grid.getCellAt(middleColumn, secondRow - 2));
-    this.occupyCells();
-    this.rotationState = 1;
-    return this;
+    this.onInit(grid);
   }
   IShape.prototype = new BaseShape();
   IShape.prototype.constructor = IShape;
+  IShape.prototype.setInitialCoordinates = function() {
+    var secondRow = this.grid.rowsCount - 2;
+    var middleColumn = parseInt(this.grid.colsCount / 2, 10);
+    this.coords.push({x: middleColumn, y: secondRow});
+    this.coords.push({x: middleColumn, y: secondRow + 1});
+    this.coords.push({x: middleColumn, y: secondRow - 1});
+    this.coords.push({x: middleColumn, y: secondRow - 2});
+  };
   IShape.prototype.getRotationData = function() {
     var center;
     var coords = [];
