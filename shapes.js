@@ -9,6 +9,11 @@
   BaseShape.prototype.constructor = BaseShape;
 
   BaseShape.prototype.occupyCell = function( cell ) {
+    if (cell.isSolid) {
+      console.error('failed render');
+      this.mediator.triggerEvent('failedRender', [cell]);
+      return false;
+    }
     cell.$el.css('background', 'red');
     cell.isCurrentShape = true;
     this.cells.push(cell);
@@ -41,7 +46,10 @@
   };
 
   BaseShape.prototype.moveDown = function() {
-    this.makeMove({x: 0, y: -1});
+    this.makeMove({x: 0, y: -1}, function() {
+      this.markAsSolid();
+      this.mediator.triggerEvent('landed');
+    });
   };
 
   BaseShape.prototype.rotate = function() {
@@ -65,7 +73,7 @@
     }
   };
 
-  BaseShape.prototype.makeMove = function( move ) {
+  BaseShape.prototype.makeMove = function( move, onObstacle ) {
     var self = this;
     var canMakeMove = this.cells.every(function( cell ) {
       var newCell = self.grid.getCellAt(cell.x + move.x, cell.y + move.y);
@@ -78,6 +86,8 @@
       this.coords.forEach(function( coord ) {
         self.occupyCell(self.grid.getCellAt(coord.x + move.x, coord.y + move.y));
       });
+    } else if (onObstacle) {
+      onObstacle.call(this);
     }
   };
 
@@ -98,8 +108,16 @@
     return this;
   };
 
-  BaseShape.prototype.onInit = function(grid ) {
+  BaseShape.prototype.markAsSolid = function() {
+    this.cells.forEach(function( cell ) {
+      cell.isSolid = true;
+      cell.isCurrentShape = false;
+    });
+  };
+
+  BaseShape.prototype.onInit = function(grid, mediator ) {
     this.rotationState = 1;
+    this.mediator = mediator;
     this.grid = grid;
     this.events = [];
     this.coords = [];
@@ -108,8 +126,8 @@
     this.occupyCells();
   };
 
-  function OShape( grid ) {
-    this.onInit(grid);
+  function OShape( grid, mediator ) {
+    this.onInit(grid, mediator);
   }
   OShape.prototype = new BaseShape();
   OShape.prototype.constructor = OShape;
@@ -126,8 +144,8 @@
     console.log("Disable the rotation for the 'O' shape");
   };
 
-  function TShape( grid ) {
-    this.onInit(grid);
+  function TShape( grid, mediator ) {
+    this.onInit(grid, mediator);
   }
   TShape.prototype = new BaseShape();
   TShape.prototype.constructor = TShape;
@@ -181,8 +199,8 @@
     return [coords, newRotationState];
   };
 
-  function SShape( grid ) {
-    this.onInit(grid);
+  function SShape( grid, mediator ) {
+    this.onInit(grid, mediator);
   }
   SShape.prototype  = new BaseShape();
   SShape.prototype.constructor = SShape;
@@ -219,8 +237,8 @@
     return [coords, newRotationState];
   };
 
-  function ZShape( grid ) {
-    this.onInit(grid);
+  function ZShape( grid, mediator ) {
+    this.onInit(grid, mediator);
   }
   ZShape.prototype  = new BaseShape();
   ZShape.prototype.constructor = ZShape;
@@ -257,8 +275,8 @@
     return [coords, newRotationState];
   };
 
-  function LShape( grid ) {
-    this.onInit(grid);
+  function LShape( grid, mediator ) {
+    this.onInit(grid, mediator);
   }
   LShape.prototype = new BaseShape();
   LShape.prototype.constructor = LShape;
@@ -311,8 +329,8 @@
     return [coords, newRotationState];
   };
 
-  function JShape( grid ) {
-    this.onInit(grid);
+  function JShape( grid, mediator ) {
+    this.onInit(grid, mediator);
   }
   JShape.prototype = new BaseShape();
   JShape.prototype.constructor = JShape;
@@ -365,8 +383,8 @@
     return [coords, newRotationState];
   };
 
-  function IShape( grid ) {
-    this.onInit(grid);
+  function IShape( grid, mediator ) {
+    this.onInit(grid, mediator);
   }
   IShape.prototype = new BaseShape();
   IShape.prototype.constructor = IShape;
