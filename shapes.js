@@ -99,6 +99,34 @@
     this.occupyCells();
   };
 
+  BaseShape.prototype.rotate = function() {
+    var self = this;
+
+    var data = this.getRotationData();
+    var coords = data[0];
+    var newRotationState = data[1];
+
+    // check the coordinates
+    var isAllowedToRotate = coords.every(function( coord ) {
+      var neighbourCell = self.grid.getCellAt(coord.x, coord.y);
+      if (!neighbourCell || neighbourCell.isSolid) {
+        console.log('could not rotate');
+        return false;
+      }
+      return true;
+    });
+
+    if (!isAllowedToRotate) {
+      console.log("rotation failed");
+      return false;
+    }
+
+    this.rotationState = newRotationState;
+    this.coords = coords;
+    this.freeCells();
+    this.occupyCells();
+  };
+
   function OShape( grid ) {
     this.grid = grid;
     var firstRow = grid.rowsCount - 1;
@@ -114,6 +142,9 @@
   }
   OShape.prototype = new BaseShape();
   OShape.prototype.constructor = OShape;
+  OShape.prototype.rotate = function() {
+    console.log("Disable the rotatioin for the 'O' shape");
+  };
 
   function TShape( grid ) {
     this.grid = grid;
@@ -126,10 +157,51 @@
     this.coords.push(grid.getCellAt(middleColumn - 1, secondRow));
     this.coords.push(grid.getCellAt(middleColumn + 1, secondRow));
     this.occupyCells();
+    this.rotationState = 1;
     return this;
   }
   TShape.prototype = new BaseShape();
   TShape.prototype.constructor = TShape;
+  TShape.prototype.getRotationData = function() {
+    var center;
+    var coords = [];
+    var newRotationState;
+    switch (this.rotationState) {
+      case 1:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x + 1, y: center.y});
+        coords.push({x: center.x, y: center.y - 1});
+        newRotationState = 2;
+        break;
+      case 2:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x + 1, y: center.y});
+        coords.push({x: center.x, y: center.y - 1});
+        newRotationState = 3;
+        break;
+      case 3:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x, y: center.y - 1});
+        newRotationState = 4;
+        break;
+      case 4:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x + 1, y: center.y});
+        newRotationState = 1;
+        break;
+    }
+    return [coords, newRotationState];
+  };
 
   function SShape( grid ) {
     this.grid = grid;
@@ -141,10 +213,35 @@
     this.coords.push(grid.getCellAt(middleColumn - 1, secondRow + 1));
     this.coords.push(grid.getCellAt(middleColumn, secondRow - 1));
     this.occupyCells();
+    this.rotationState = 1;
     return this;
   }
   SShape.prototype  = new BaseShape();
   SShape.prototype.constructor = SShape;
+  SShape.prototype.getRotationData = function() {
+    var center;
+    var coords = [];
+    var newRotationState;
+    switch (this.rotationState) {
+      case 1:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x + 1, y: center.y + 1});
+        coords.push({x: center.x - 1, y: center.y});
+        newRotationState = 2;
+        break;
+      case 2:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x - 1, y: center.y + 1});
+        coords.push({x: center.x, y: center.y - 1});
+        newRotationState = 1;
+        break;
+    }
+    return [coords, newRotationState];
+  };
 
   function ZShape( grid ) {
     this.grid = grid;
@@ -156,10 +253,35 @@
     this.coords.push(grid.getCellAt(middleColumn - 1, secondRow - 1));
     this.coords.push(grid.getCellAt(middleColumn, secondRow + 1));
     this.occupyCells();
+    this.rotationState = 1;
     return this;
   }
   ZShape.prototype  = new BaseShape();
   ZShape.prototype.constructor = ZShape;
+  ZShape.prototype.getRotationData = function() {
+    var center;
+    var coords = [];
+    var newRotationState;
+    switch (this.rotationState) {
+      case 1:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x + 1, y: center.y});
+        coords.push({x: center.x - 1, y: center.y + 1});
+        newRotationState = 2;
+        break;
+      case 2:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x - 1, y: center.y - 1});
+        coords.push({x: center.x, y: center.y + 1});
+        newRotationState = 1;
+        break;
+    }
+    return [coords, newRotationState];
+  };
 
   function LShape( grid ) {
     this.grid = grid;
@@ -171,10 +293,51 @@
     this.coords.push(grid.getCellAt(middleColumn, secondRow - 1));
     this.coords.push(grid.getCellAt(middleColumn + 1, secondRow - 1));
     this.occupyCells();
+    this.rotationState = 1;
     return this;
   }
   LShape.prototype = new BaseShape();
   LShape.prototype.constructor = LShape;
+  LShape.prototype.getRotationData = function() {
+    var center;
+    var coords = [];
+    var newRotationState;
+    switch (this.rotationState) {
+      case 1:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x + 1, y: center.y});
+        coords.push({x: center.x + 1, y: center.y + 1});
+        newRotationState = 2;
+        break;
+      case 2:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x, y: center.y - 1});
+        coords.push({x: center.x - 1, y: center.y + 1});
+        newRotationState = 3;
+        break;
+      case 3:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x + 1, y: center.y});
+        coords.push({x: center.x - 1, y: center.y - 1});
+        newRotationState = 4;
+        break;
+      case 4:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x, y: center.y - 1});
+        coords.push({x: center.x + 1, y: center.y - 1});
+        newRotationState = 1;
+        break;
+    }
+    return [coords, newRotationState];
+  };
 
   function JShape( grid ) {
     this.grid = grid;
@@ -186,10 +349,51 @@
     this.coords.push(grid.getCellAt(middleColumn, secondRow - 1));
     this.coords.push(grid.getCellAt(middleColumn -1, secondRow - 1));
     this.occupyCells();
+    this.rotationState = 1;
     return this;
   }
   JShape.prototype = new BaseShape();
   JShape.prototype.constructor = JShape;
+  JShape.prototype.getRotationData = function() {
+    var center;
+    var coords = [];
+    var newRotationState;
+    switch (this.rotationState) {
+      case 1:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x + 1, y: center.y});
+        coords.push({x: center.x - 1, y: center.y + 1});
+        newRotationState = 2;
+        break;
+      case 2:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x + 1, y: center.y + 1});
+        coords.push({x: center.x, y: center.y - 1});
+        newRotationState = 3;
+        break;
+      case 3:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x + 1, y: center.y});
+        coords.push({x: center.x + 1, y: center.y - 1});
+        newRotationState = 4;
+        break;
+      case 4:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x, y: center.y - 1});
+        coords.push({x: center.x - 1, y: center.y - 1});
+        newRotationState = 1;
+        break;
+    }
+    return [coords, newRotationState];
+  };
 
   function IShape( grid ) {
     this.grid = grid;
@@ -201,10 +405,35 @@
     this.coords.push(grid.getCellAt(middleColumn, secondRow - 1));
     this.coords.push(grid.getCellAt(middleColumn, secondRow - 2));
     this.occupyCells();
+    this.rotationState = 1;
     return this;
   }
   IShape.prototype = new BaseShape();
   IShape.prototype.constructor = IShape;
+  IShape.prototype.getRotationData = function() {
+    var center;
+    var coords = [];
+    var newRotationState;
+    switch (this.rotationState) {
+      case 1:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x - 1, y: center.y});
+        coords.push({x: center.x + 1, y: center.y});
+        coords.push({x: center.x + 2, y: center.y});
+        newRotationState = 2;
+        break;
+      case 2:
+        center = this.cells[0];
+        coords.push({x: center.x, y: center.y});
+        coords.push({x: center.x, y: center.y + 1});
+        coords.push({x: center.x, y: center.y - 1});
+        coords.push({x: center.x, y: center.y - 2});
+        newRotationState = 1;
+        break;
+    }
+    return [coords, newRotationState];
+  };
 
 
   // Pack all the shape classes in one object (namespace)
