@@ -3,6 +3,21 @@
 
   var speed = 1000;
 
+  var levelsOfDifficulty = [
+    { id: 1, threshold: 10, speed: 1000 },
+    { id: 2, threshold: 20, speed: 900 },
+    { id: 3, threshold: 30, speed: 800 },
+    { id: 4, threshold: 40, speed: 700 },
+    { id: 5, threshold: 50, speed: 600 },
+    { id: 6, threshold: 60, speed: 500 },
+    { id: 7, threshold: 70, speed: 400 },
+    { id: 8, threshold: 80, speed: 200 },
+    { id: 9, threshold: 90, speed: 100 },
+    { id: 10, threshold: false, speed: 100 }
+  ];
+  
+  var score = 0;
+
   function Mediator() {
     this.events = [];
   }
@@ -25,9 +40,11 @@
     this.cols = options.cols;
     this.gamePlaceholder = options.gamePlaceholder;
     this.previewPlaceholder = options.previewPlaceholder;
+    this.scorePlaceholder = options.scorePlaceholder;
     this.shapes = [Shape.O,Shape.T,Shape.Z,Shape.S,Shape.L,Shape.J,Shape.I];
     this.next = this.getRandomShape();
     this.mediator = new Mediator();
+    this.pointsPerCollapsedRow = 10;
     this.render();
     this.subscribe();
   }
@@ -48,6 +65,10 @@
           placeholder: this.previewPlaceholder
         }
       });
+      var $scoreView = $(this.scorePlaceholder);
+      this.$levelView = $scoreView.find('#level');
+      this.$pointsView = $scoreView.find('#score-points');
+      this.updateScore(this.getLevel());
       return this;
     },
 
@@ -89,6 +110,27 @@
             break;
         }
       });
+    },
+    
+    getLevel: function() {
+      var currentLevel = levelsOfDifficulty[0];
+      levelsOfDifficulty.every(function( level ) {
+        if (level.threshold === false || score < level.threshold) {
+          currentLevel = level;
+          return false;
+        }
+        return true;
+      });
+      return currentLevel;
+    },
+    
+    updateScore: function( level ) {
+      this.$levelView.text(level.id);
+      this.$pointsView.text(score);
+    },
+    
+    updateDifficulty: function( level ) {
+      speed = level.speed;
     },
 
     createNewShape: function() {
@@ -151,6 +193,12 @@
       });
       this.mediator.on('failedRender', function() {
         self.endGame();
+      });
+      this.mediator.on('rowsCollapsed', function() {
+        score += self.pointsPerCollapsedRow;
+        var level = self.getLevel();
+        self.updateDifficulty(level);
+        self.updateScore(level);
       });
     },
 

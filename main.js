@@ -5,7 +5,8 @@
     rows: 25,
     cols: 13,
     gamePlaceholder: '#tetris',
-    previewPlaceholder: '#preview'
+    previewPlaceholder: '#preview',
+    scorePlaceholder: '#score'
   });
   tetris.init();
 

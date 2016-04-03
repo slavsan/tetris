@@ -1,10 +1,22 @@
 (function( global ){
   "use strict";
 
+  var colors = [
+    'aqua',
+    'deepskyblue',
+    'lawngreen',
+    'hotpink',
+    'lightseagreen',
+    'orange',
+    'grey',
+    'springgreen',
+    'gold'
+  ];
+
   var Shape = {};
 
   function BaseShape() {
-    this.cells = [];
+    this.getRandomColor();
   }
   BaseShape.prototype.constructor = BaseShape;
 
@@ -14,7 +26,7 @@
       this.mediator.triggerEvent('failedRender', [cell]);
       return false;
     }
-    cell.$el.css('background', 'red');
+    cell.$el.css('background', this.color);
     cell.isCurrentShape = true;
     this.cells.push(cell);
     return this;
@@ -113,6 +125,10 @@
       cell.isSolid = true;
       cell.isCurrentShape = false;
     });
+  };
+
+  BaseShape.prototype.getRandomColor = function() {
+    this.color = colors[Math.floor(Math.random() * colors.length)];
   };
 
   BaseShape.prototype.onInit = function(grid, mediator ) {
