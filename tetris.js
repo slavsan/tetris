@@ -1,4 +1,4 @@
-(function( global, Grid ) {
+(function( global, Grid, Shape ) {
   "use strict";
 
   function Tetris( options ) {
@@ -6,6 +6,7 @@
     this.rows = options.rows;
     this.cols = options.cols;
     this.placeholder = options.placeholder;
+    this.shapes = [Shape.O,Shape.T,Shape.Z,Shape.S,Shape.L,Shape.J,Shape.I];
     this.render();
   }
   Tetris.prototype = {
@@ -20,10 +21,10 @@
       return this;
     },
     init: function() {
-      // ..
+      var shape = new this.shapes[0](this.grid);
     }
   };
 
   global.Tetris = Tetris;
 
-}( window, window.Grid ));
+}( window, window.Grid, window.Shape ));
